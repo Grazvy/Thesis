@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+from PIL import Image
+from matplotlib.animation import FFMpegWriter
 
-from utils import build_graph
+
+from utils import build_graph, interpolate_positions, draw_rect
 
 CPF = 0
 CONST = 1
@@ -15,7 +18,10 @@ class SNP_Simulator:
         self.num_fractions = num_fractions
         self.frac = total_flow / num_fractions
         self.G = build_graph()
+        self.paths = list(nx.all_simple_paths(self.G, source='A', target='D'))
         self.labels = self.get_labels()
+        self.pos = nx.shell_layout(self.G)
+        # self.pos = nx.spring_layout(G)
 
     def run_simulation(self):
         progress = self.get_path_structure()
@@ -31,19 +37,52 @@ class SNP_Simulator:
 
         induced_costs = [path[CONST] * path[FLOW] for path in progress]
 
-        return flow_order, max(induced_costs)
+        return flow_order, induced_costs
 
-    def plot_results(self):
-        #todo
-        pass
+    def save_results(self, order, fps=20, steps=5):
+        metadata = dict(title="Network Animation", artist="Matplotlib", comment="Path traversal animation")
+        writer = FFMpegWriter(fps=fps, metadata=metadata)
+        fig, ax = plt.subplots()
+        sx, sy = self.pos['A']
+        tx, ty = self.pos['D']
+        h = 0.18 / self.num_fractions
+
+        with writer.saving(fig, "network_animation.mp4", dpi=100):
+            for i, path_index in enumerate(order):
+                point_positions = interpolate_positions(self.pos, list(nx.utils.pairwise(self.paths[path_index])), steps)
+
+                # make frame
+                for x, y in point_positions:
+                    ax.clear()
+                    nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
+                            font_size=10, font_weight="bold", ax=ax)
+                    nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
+                    ax.plot(x - 0.02, y, "bs", markersize=5)
+
+                    for s in range(self.num_fractions - i - 1):
+                        draw_rect(ax, x=(sx - 0.05), y=(sy + 0.1 + (h + 0.022) * s), h=h)
+
+                    for t in range(i):
+                        draw_rect(ax, x=(tx - 0.05), y=(ty + 0.1 + (h + 0.022) * t), h=h)
+
+                    writer.grab_frame()
+                    plt.close(fig)
+
+            ax.clear()
+            nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
+                    font_size=10, font_weight="bold", ax=ax)
+            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
+            for t in range(i):
+                draw_rect(ax, x=(tx - 0.05), y=(ty + 0.1 + (h + 0.02) * t), h=h)
+            writer.grab_frame()
+            plt.close(fig)
+
+        print("Video file saved as network_animation.mp4")
 
     def plot_network(self):
-        pos = nx.shell_layout(self.G)
-        # pos = nx.spring_layout(G)
-
-        nx.draw(self.G, pos, with_labels=True, node_color="skyblue", node_size=300, font_size=10, font_weight="bold",
+        nx.draw(self.G, self.pos, with_labels=True, node_color="skyblue", node_size=300, font_size=10, font_weight="bold",
                 edge_color="gray", width=5)
-        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=self.labels, font_size=15)
+        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15)
 
         plt.title("Braess Network")
         plt.show()
@@ -68,10 +107,9 @@ class SNP_Simulator:
         return edge_labels
 
     def get_path_structure(self):
-        paths = list(nx.all_simple_paths(self.G, source='A', target='D'))
         structure = []  # (cost_per_fraction, const, flow)
 
-        for path in paths:
+        for path in self.paths:
             cpf = 0
             const = 0
 
