@@ -38,25 +38,35 @@ class SNP_Simulator:
 
         return flow_order, induced_costs
 
-    def save_results(self, order, fps=20, steps=5):
+    def save_results(self, order, fps=20, steps=5, width=10):
         metadata = dict(title="Network Animation", artist="Matplotlib", comment="Path traversal animation")
         writer = FFMpegWriter(fps=fps, metadata=metadata)
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(width, 6))
+        info_ax = fig.add_axes([0.85, 0.1, 0.1, 0.8])
         sx, sy = self.pos['A']
         tx, ty = self.pos['D']
         h = 0.2 / self.num_fractions
         mx = min(sx, tx) - 0.2
         my = max(sy, ty) + 0.3
+        progress = self.get_path_structure()
 
         with writer.saving(fig, "network_animation.mp4", dpi=100):
             for i, path_index in enumerate(order):
                 point_positions = interpolate_positions(self.pos, list(nx.utils.pairwise(self.paths[path_index])), steps)
                 progress_bar(i / len(order))
+                progress[path_index][CONST] += progress[path_index][CPF]
+
+                info_ax.clear()
+                info_ax.axis('off')
+                info_ax.text(0.6, 1.05, "Path costs", ha='center', va='top', fontsize=12, fontweight='bold')
+                for j, path in enumerate(progress):
+                    label = "-".join(map(str, self.paths[j]))
+                    info_ax.text(0.6, 0.9 - 0.15 * j, f"{label} : {round(path[CONST], 3)}", ha='center', fontsize=10)
 
                 # make frame
                 for x, y in point_positions:
                     ax.clear()
-                    ax.plot(mx, my, "ws", markersize=5)
+                    #ax.plot(mx, my, "ws", markersize=5)
                     nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                             font_size=10, font_weight="bold", ax=ax)
                     nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
@@ -70,7 +80,7 @@ class SNP_Simulator:
                     plt.close(fig)
 
             ax.clear()
-            ax.plot(mx, my, "ws", markersize=5)
+            #ax.plot(mx, my, "ws", markersize=5)
             nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                     font_size=10, font_weight="bold", ax=ax)
             nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
