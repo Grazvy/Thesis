@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 import networkx as nx
-from PIL import Image
 from matplotlib.animation import FFMpegWriter
 
 
-from utils import build_graph, interpolate_positions, draw_rect
+from utils import build_graph, interpolate_positions, draw_rect, progress_bar
 
 CPF = 0
 CONST = 1
@@ -45,39 +44,42 @@ class SNP_Simulator:
         fig, ax = plt.subplots()
         sx, sy = self.pos['A']
         tx, ty = self.pos['D']
-        h = 0.18 / self.num_fractions
+        h = 0.2 / self.num_fractions
+        mx = min(sx, tx) - 0.2
+        my = max(sy, ty) + 0.3
 
         with writer.saving(fig, "network_animation.mp4", dpi=100):
             for i, path_index in enumerate(order):
                 point_positions = interpolate_positions(self.pos, list(nx.utils.pairwise(self.paths[path_index])), steps)
+                progress_bar(i / len(order))
 
                 # make frame
                 for x, y in point_positions:
                     ax.clear()
+                    ax.plot(mx, my, "ws", markersize=5)
                     nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                             font_size=10, font_weight="bold", ax=ax)
                     nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
-                    ax.plot(x - 0.02, y, "bs", markersize=5)
+                    ax.plot(x - 0.02, y, "bs", markersize=6)
 
-                    for s in range(self.num_fractions - i - 1):
-                        draw_rect(ax, x=(sx - 0.05), y=(sy + 0.1 + (h + 0.022) * s), h=h)
-
-                    for t in range(i):
-                        draw_rect(ax, x=(tx - 0.05), y=(ty + 0.1 + (h + 0.022) * t), h=h)
+                    draw_rect(ax, x=(sx - 0.05), y=(sy + 0.15), h=h * (self.num_fractions - i - 1))
+                    if i != 0:
+                        draw_rect(ax, x=(tx - 0.05), y=(ty + 0.15), h=h * i)
 
                     writer.grab_frame()
                     plt.close(fig)
 
             ax.clear()
+            ax.plot(mx, my, "ws", markersize=5)
             nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                     font_size=10, font_weight="bold", ax=ax)
             nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
-            for t in range(i):
-                draw_rect(ax, x=(tx - 0.05), y=(ty + 0.1 + (h + 0.02) * t), h=h)
+            draw_rect(ax, x=(tx - 0.05), y=(ty + 0.15), h=h * i)
             writer.grab_frame()
             plt.close(fig)
+            progress_bar(1)
 
-        print("Video file saved as network_animation.mp4")
+        print("\nVideo file saved as network_animation.mp4")
 
     def plot_network(self):
         nx.draw(self.G, self.pos, with_labels=True, node_color="skyblue", node_size=300, font_size=10, font_weight="bold",

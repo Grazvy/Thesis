@@ -28,3 +28,11 @@ def interpolate_positions(pos, path_edges, steps):
     return interpolated_positions
 
 
+def progress_bar(fraction, prefix="", length=40, fill="█"):
+    fraction = max(0, min(1, fraction))
+    percent = ("{0:.1f}").format(100 * fraction)
+    filled_length = int(length * fraction)
+    bar = fill * filled_length + "-" * (length - filled_length)
+    print(f"\r{prefix} |{bar}| {percent}%", end="")
+
+
