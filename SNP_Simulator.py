@@ -2,14 +2,35 @@ from utils import build_graph
 
 import networkx as nx
 
-# static n-player simulator
-class SNP_Simulator():
+CPF = 0
+CONST = 1
+FLOW = 2
 
-    def __init__(self):
-        self.frac = 0.5
+
+# static n-player simulator
+class SNP_Simulator:
+
+    def __init__(self, total_flow=1, num_fractions=5):
+        self.num_fractions = num_fractions
+        self.frac = total_flow / num_fractions
         self.G = build_graph()
         self.labels = self.get_labels()
-        self.progress = self.get_path_structure()
+
+    def run_simulation(self):
+        progress = self.get_path_structure()
+        flow_order = []
+
+        for _ in range(self.num_fractions):
+            direct_costs = [path[CPF] + path[CONST] for path in progress]
+            i = direct_costs.index(min(direct_costs))
+
+            progress[i][CONST] += progress[i][CPF]
+            progress[i][FLOW] += self.frac
+            flow_order.append(i)
+
+        induced_costs = [path[CONST] * path[FLOW] for path in progress]
+
+        return flow_order, max(induced_costs)
 
     def get_labels(self):
         multipliers = nx.get_edge_attributes(self.G, 'mult')
