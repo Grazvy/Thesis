@@ -1,6 +1,7 @@
-from utils import build_graph
-
+import matplotlib.pyplot as plt
 import networkx as nx
+
+from utils import build_graph
 
 CPF = 0
 CONST = 1
@@ -31,6 +32,21 @@ class SNP_Simulator:
         induced_costs = [path[CONST] * path[FLOW] for path in progress]
 
         return flow_order, max(induced_costs)
+
+    def plot_results(self):
+        #todo
+        pass
+
+    def plot_network(self):
+        pos = nx.shell_layout(self.G)
+        # pos = nx.spring_layout(G)
+
+        nx.draw(self.G, pos, with_labels=True, node_color="skyblue", node_size=300, font_size=10, font_weight="bold",
+                edge_color="gray", width=5)
+        nx.draw_networkx_edge_labels(self.G, pos, edge_labels=self.labels, font_size=15)
+
+        plt.title("Braess Network")
+        plt.show()
 
     def get_labels(self):
         multipliers = nx.get_edge_attributes(self.G, 'mult')
@@ -63,6 +79,6 @@ class SNP_Simulator:
                 cpf += self.G.edges[u, v]['mult'] * self.frac
                 const += self.G.edges[u, v]['const']
 
-            structure.append((cpf, const, 0))
+            structure.append([cpf, const, 0])
 
         return structure
