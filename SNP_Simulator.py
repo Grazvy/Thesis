@@ -46,8 +46,6 @@ class SNP_Simulator:
         sx, sy = self.pos['A']
         tx, ty = self.pos['D']
         h = 0.2 / self.num_fractions
-        mx = min(sx, tx) - 0.2
-        my = max(sy, ty) + 0.3
         progress = self.get_path_structure()
 
         with writer.saving(fig, "network_animation.mp4", dpi=100):
@@ -66,7 +64,6 @@ class SNP_Simulator:
                 # make frame
                 for x, y in point_positions:
                     ax.clear()
-                    #ax.plot(mx, my, "ws", markersize=5)
                     nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                             font_size=10, font_weight="bold", ax=ax)
                     nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
@@ -80,7 +77,6 @@ class SNP_Simulator:
                     plt.close(fig)
 
             ax.clear()
-            #ax.plot(mx, my, "ws", markersize=5)
             nx.draw(self.G, self.pos, with_labels=True, node_color="gray", edge_color="gray", node_size=300,
                     font_size=10, font_weight="bold", ax=ax)
             nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15, ax=ax)
@@ -96,7 +92,6 @@ class SNP_Simulator:
                 edge_color="gray", width=5)
         nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.labels, font_size=15)
 
-        plt.title("Braess Network")
         plt.show()
 
     def get_labels(self):
