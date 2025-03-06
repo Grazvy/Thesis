@@ -15,8 +15,14 @@ def build_graph():
 
     return G
 
+
+def path_has_edge(p, u, v):
+    return any((p[i] == u and p[i + 1] == v) for i in range(len(p) - 1))
+
+
 def draw_rect(ax, x, y, w=0.1, h=0.04):
     ax.add_patch(Rectangle((x, y), w, h, linewidth=1, edgecolor='b', facecolor='b'))
+
 
 def interpolate_positions(pos, path_edges, steps):
     interpolated_positions = []
