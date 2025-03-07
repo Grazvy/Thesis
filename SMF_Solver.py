@@ -32,6 +32,11 @@ def solve_static_meanfield():
         rh = np.append(rh, const_trns - const)
 
     try:
-        return np.linalg.solve(lh, rh)
+        np.linalg.solve(lh, rh)
+        sol = np.linalg.solve(lh, rh)
+        if any(x < 0 for x in sol):
+            print("No valid solution found.")
+
+        return sol
     except np.linalg.linalg.LinAlgError:
         print("An error occured while solving the linear equation system.")
